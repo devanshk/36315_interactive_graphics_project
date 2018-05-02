@@ -50,14 +50,13 @@ ui <- dashboardPage(
       tabItem(tabName = "ross",
         fluidRow(
           h2("Careers, Work Sector, and Income"),
-          
-          box(plotOutput("inc_plot", width="100%"), width=8),
 
           box(
             width=4,
             title = "Controls",
             # Input
-            selectInput(inputId = "occupation",
+            selectInput(
+                  inputId = "occupation",
                   label = "Select an Occupation",
                   choices = c("All" = "all",
                               "Administrative/Clerical" = "Adm-clerical", 
@@ -99,7 +98,8 @@ ui <- dashboardPage(
                                          "US Born" = "us_born"))
           ),
           
-          box(plotOutput("cat_plot", width="100%"), width=8)
+          box(plotOutput("inc_plot", width="100%"), width=8),
+          box(plotOutput("cat_plot", width="100%"), width=12)
         )
       ),
 
