@@ -1,0 +1,138 @@
+---
+title: "36-315 Interactive Graphis Project, Spring 2018"
+author: "Devansh Kukreja (dkukreja), Oliver Liu (zhuoranl), Ross A Hemmel (rhemmel)"
+date: "Due Wednesday, May 2, 2018 (11:59pm) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+runtime: shiny
+---
+
+#  Homework 11: Interaction
+
+***
+***
+
+# Problem 0
+
+**Administrative checklist**
+
+* "We used Google's R style guide."
+
+* "This submission is for the following group: Devansh Kukreja (dkukreja), Zhuoran Liu (zhuoranl), Ross A Hemmel (rhemmel)
+
+***
+***
+
+The following problems are based on the first example from RStudio's [Interactive Documents](https://rmarkdown.rstudio.com/authoring_shiny.html) page. We will show a histogram and density plot for the Old Faithful dataset, and we will allow users to control the binwidth and bandwidth interactively.
+
+Read the Old Faithful documentation file using `?faithful` to see what its variables and observations are.
+
+As far as I can tell, the data were recorded in order across about 2 weeks. Just so that we can add a continuous variable to the dataset, let's assume that about half of the observations were taken during each week.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+df = read.csv("/Users/devanshkukreja/Box Sync/CMU 2018 Spring/Stat Vis - 36315/36315_interactive_graphics_project/dkukreja/adult_census_income.csv")
+
+library(ggplot2)
+library(tidyverse)
+```
+
+```{r}
+# Clean and improve data
+df <- mutate(df,
+             education = factor(education,
+                                levels=c("Preschool","1st-4th","5th-6th","7th-8th","9th","10th","11th","12th","HS-grad","Some-college","Assoc-voc","Assoc-acdm","Bachelors","Masters","Prof-school","Doctorate"),
+                                ordered=TRUE))
+
+```
+
+# Problem 1: Shiny Outputs
+
+*a. (0 points)  Run the existing app by clicking the "Run Document" button in RStudio. Play with the two inputs (dropdown and slider). Can you find a combination of histogram binwidth and density bandwidth adjustment for which the histogram and density plot look similar?*
+
+*b. (20 points)  Modify the code below, so that the histogram and density plot are drawn using `ggplot2` instead of base R graphics. You only need to replace what's inside `renderPlot({...})`.*
+
+* *Make a single call to `ggplot()`, specifying the `faithful` dataset. Map the `eruptions` variable to the x aesthetic, and map `..density..` to the y-aesthetic so the histogram and density plots will have the same scale.*
+* *Add the two geoms. Use `input$n_breaks` and `input$bw_adjust` to specify the number of histogram bins and the density bandwidth adjustment.*
+* *Make sure you have an appropriate title, axis labels, and data-source caption.*
+
+```{r plot1, echo=FALSE, warning=FALSE, message=FALSE}
+shinyApp(
+  
+  ui = fluidPage(
+    inputPanel(
+      radioButtons("metric", label='Metric:',
+                   choices= c("Capital Gains", "Capital Losses")),
+      
+      checkboxInput("edges", label='Show Edge Entries (0 and 99999):')
+    ),
+    
+    plotOutput("census_plot")
+  ),
+  
+  server = function(input, output) {
+    output$census_plot <- renderPlot({
+      ## PUT YOUR GGPLOT CODE HERE ##
+      df_cur = df
+      if(!input$edges && input$metric == 'Capital Gains') df_cur <- filter(df, capital.gain < 99999 & capital.gain > 0)
+      if(!input$edges && input$metric == 'Capital Losses') df_cur <- filter(df, capital.loss > 0)
+      
+      title = "Education Level and Investment Success"
+      
+      ggplot(df_cur, aes_string(x='education', y = ifelse(input$metric == 'Capital Gains', "capital.gain", "capital.loss"))) +
+        geom_boxplot(alpha=0.7) +
+        geom_point(alpha=0.3) +
+        geom_jitter(width=0.1, height=0.1) +
+        geom_smooth(aes(x=education.num)) +
+        labs(title=title,
+             x="Highest Education Level",
+             y=input$metric)+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    })
+  },
+  
+  options = list(height = 550)
+)
+```
+
+```{r plot2, echo=FALSE, warning=FALSE, message=FALSE}
+shinyApp(
+  
+  ui = fluidPage(
+    inputPanel(
+      radioButtons("sex", label='Gender:',
+                   choices = c("Both", "Male", "Female")),
+      
+      radioButtons("race", label='Race:',
+                   choices = c("All","White", "Black", "Asian-Pac-Islander", "Amer-Indian-Eskimo", "Other"))
+    ),
+    
+    plotOutput("census_plot")
+  ),
+  
+  server = function(input, output) {
+    output$census_plot <- renderPlot({
+      ## PUT YOUR GGPLOT CODE HERE ##
+      df_cur = df
+      if(input$sex != 'Both') df_cur <- filter(df, sex == input$sex)
+      if(input$race != 'All') df_cur <- filter(df_cur, race == input$race)
+      
+      title = sprintf("Education Level and Gender on Income (%d entries)",nrow(df_cur))
+      
+      ggplot(df_cur, aes_string(x='education', fill = 'income')) +
+        geom_bar(position='fill') +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        labs(title = title,
+             x="Highest Education Level",
+             y="Proportion")
+    })
+  },
+  
+  options = list(height = 550)
+)
+```
+
+***
+***
