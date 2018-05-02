@@ -80,6 +80,7 @@ ui <- fluidPage(
       ),
       checkboxInput("inc0", label = "Include 0 Capital Income?"),
       checkboxInput("inc99999", label = "Include Capital Income > $99,999?"),
+      checkboxInput("prop_hist", label = "Proportional Histogram?"),
       radioButtons("facet", label = "Facet?",
                    choices = c("None" = "none",
                                "Sex" = "sex",
@@ -116,13 +117,21 @@ server <- function(input, output) {
     
     ci_plot <- ggplot(data = census_subset, aes(x = capital.income, 
                                                 fill = workclass)) +
-      geom_histogram(binwidth = 500) +
       labs(title = "Distribution of Capital Income",
            subtitle = "The Intersection of Occupation and Work Sector",
-           x = "Capital Income",
-           y = "Count")
-    
-    if(input$workclass == "all"){
+           x = "Capital Income")
+    if (input$prop_hist) {
+      ci_plot <- ci_plot + 
+        geom_histogram(binwidth = 1000, 
+                       aes(y = ..count.. /
+                             tapply(..count.., ..PANEL.., sum)[..PANEL..])) +
+        labs(y = "Proportion")
+    }
+    else {
+      ci_plot <- ci_plot + geom_histogram(binwidth = 1000) +
+        labs(y = "Count")
+    }
+    if (input$workclass == "all"){
       ci_plot <- ci_plot + labs(fill = "Work Sector")
     }
     else{
