@@ -1,0 +1,108 @@
+---
+title: "Interactive Project"
+author: "Oliver Liu, zhuoranl"
+date: "5/1/2018"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(plotly)
+library(shiny)
+
+setwd("/Users/zhuoranliu/Desktop/interactive")
+census <- read.csv("adult_census_income.csv")
+
+nan_idx <- union(which(census$occupation == '?'), which(census$workclass == '?'))
+census_light <- census[-nan_idx,]
+unisex.relationship <- census_light$relationship
+levels(unisex.relationship) <- c(levels(unisex.relationship),"Married")
+unisex.relationship[which(unisex.relationship == "Husband" | unisex.relationship == "Wife")] = "Married"
+census_light <- mutate(census_light,
+                       unisex.relationship = unisex.relationship)
+```
+
+```{r, warning=FALSE, message=FALSE}
+shinyApp(
+  
+  ui = fluidPage(
+    inputPanel(
+      
+      checkboxInput("do_facet", label = "Facet on Gender"),
+  
+      radioButtons("which_variable", label = "Which variable?",
+                   choices = c("Occupation" = "occupation",
+                               "Marital Status" = "marital.status",
+                               "Work Class" = "workclass",
+                               "Education" = "education",
+                               "Race" = "race"))
+    ),
+    
+    plotOutput("census_plot")
+  ),
+  
+  server = function(input, output) {
+    output$census_plot <- renderPlot({
+      
+      p <- ggplot(census_light, aes_string(x = "unisex.relationship", fill = input$which_variable)) +
+        geom_bar(position = "fill") +
+        labs(x = "relationship",
+             title = paste("Relationship vs", input$which_variable))
+      
+      if(input$do_facet) {
+        p <- p + facet_wrap(~ sex)
+      }
+      
+      p
+      
+    })
+  },
+  
+  options = list(height = 650)
+)
+```
+
+```{r, warning=FALSE, message=FALSE}
+shinyApp(
+  
+  ui = fluidPage(
+    inputPanel(
+
+      radioButtons("which_variable", label = "Which variable?",
+                   choices = c("Occupation" = "occupation",
+                               "Marital Status" = "marital.status",
+                               "Work Class" = "workclass",
+                               "Education" = "education")),
+      
+      radioButtons("which_race", label = "Which Race?",
+                   choices = c("American-Indian-Eskimo" = "Amer-Indian-Eskimo",
+                               "Asian-Pacific Islander" = "Asian-Pac-Islander",
+                               "Black" = "Black",
+                               "Other" = "Other",
+                               "White" = "White"))
+    ),
+    
+    plotOutput("census_plot")
+  ),
+  
+  server = function(input, output) {
+    output$census_plot <- renderPlot({
+      
+      p <- ggplot(census_light, aes_string(x = "unisex.relationship", fill = input$which_variable)) +
+        geom_bar(position = "fill") +
+        labs(x = "relationship",
+             title = paste("Relationship vs", input$which_variable))
+      
+      p
+      
+    })
+  },
+  
+  options = list(height = 650)
+)
+```

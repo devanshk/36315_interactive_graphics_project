@@ -9,6 +9,7 @@ runtime: shiny
 ```{r setup, include=FALSE, message=FALSE}
 library(shiny)
 library(tidyverse)
+library(plotly)
 ```
 
 ```{r, message = FALSE}
@@ -29,10 +30,6 @@ census <- read_csv("adult_census_income.csv") %>%
          us_born = ifelse(native.country == "United-States", "US Born", "Not US Born"))
 
 
-
-```
-
-```{r}
 # Define UI 
 ui <- fluidPage(
 
@@ -91,16 +88,14 @@ ui <- fluidPage(
 
     # Main panel
     mainPanel(
-      tabsetPanel(type = "tabs",
-                  tabPanel("Capital Income", plotOutput("inc_plot")),
-                  tabPanel("Income Category", plotOutput("cat_plot")))
+      plotlyOutput("inc_plot"), plotOutput("cat_plot")
     )
   )
 )
 
 server <- function(input, output) {
 
-  output$inc_plot <- renderPlot({
+  output$inc_plot <- renderPlotly({
     census_subset <- census
     if (!input$inc0) {
       census_subset <- census_subset %>% filter(capital.income != 0)
@@ -146,7 +141,12 @@ server <- function(input, output) {
     if (input$facet == "us_born") {
       ci_plot <- ci_plot + facet_grid(us_born ~ .)
     }
-    ci_plot
+    if (nrow(census_subset) == 0) {
+      print("There are no observations satisfying the given criteria.")
+    }
+    else{
+      ci_plot
+    }
     })
   output$cat_plot <- renderPlot({
     census_subset <- census
@@ -187,6 +187,3 @@ server <- function(input, output) {
 
 shinyApp(ui = ui, server = server)
 ```
-
-
-
