@@ -119,7 +119,7 @@ shinyApp(
       if(input$sex != 'Both') df_cur <- filter(df, sex == input$sex)
       if(input$race != 'All') df_cur <- filter(df_cur, race == input$race)
       
-      title = sprintf("Education Level and Gender on Income (%d entries)",nrow(df_cur))
+      title = sprintf("Education Level and Gender on Income (%d entries)", nrow(df_cur))
       
       ggplot(df_cur, aes_string(x='education', fill = 'income')) +
         geom_bar(position='fill') +
