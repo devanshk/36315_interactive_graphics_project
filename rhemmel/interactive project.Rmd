@@ -9,6 +9,7 @@ runtime: shiny
 ```{r setup, include=FALSE, message=FALSE}
 library(shiny)
 library(tidyverse)
+library(plotly)
 ```
 
 ```{r, message = FALSE}
@@ -87,14 +88,14 @@ ui <- fluidPage(
 
     # Main panel
     mainPanel(
-      plotOutput("inc_plot"), plotOutput("cat_plot")
+      plotlyOutput("inc_plot"), plotOutput("cat_plot")
     )
   )
 )
 
 server <- function(input, output) {
 
-  output$inc_plot <- renderPlot({
+  output$inc_plot <- renderPlotly({
     census_subset <- census
     if (!input$inc0) {
       census_subset <- census_subset %>% filter(capital.income != 0)
