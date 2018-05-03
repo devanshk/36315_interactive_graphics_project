@@ -10,12 +10,13 @@ library(ggplot2)
 library(tidyverse)
 library(shiny)
 library(shinydashboard)
+library(plotly)
 ```
 
 ```{r data_imports}
-df <- read.csv("/Users/devanshkukreja/Box Sync/CMU 2018 Spring/Stat Vis - 36315/36315_interactive_graphics_project/dkukreja/adult_census_income.csv")
+df <- read.csv("adult_census_income.csv")
 
-census <- read_csv("/Users/devanshkukreja/Box Sync/CMU 2018 Spring/Stat Vis - 36315/36315_interactive_graphics_project/dkukreja/adult_census_income.csv") %>% 
+census <- read_csv("adult_census_income.csv") %>% 
   select(-fnlwgt) %>% 
   mutate(occupation = ifelse(occupation == "?", "Unknown", occupation) %>% 
            factor,
@@ -37,11 +38,11 @@ ui <- dashboardPage(
   dashboardHeader(title = "Basic dashboard"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Ross", tabName = "ross", icon = icon("dashboard")),
-      menuItem("Devansh 1", tabName = "devansh_1", icon = icon("th")),
-      menuItem("Devansh 2", tabName = "devansh_2", icon = icon("th")),
-      menuItem("Oliver 1", tabName = "oliver_1", icon = icon("th")),
-      menuItem("Oliver 2", tabName = "oliver_2", icon = icon("th"))
+      menuItem("Career Path and Income", tabName = "ross", icon = icon("dashboard")),
+      menuItem("Capital Gains and Education", tabName = "devansh_1", icon = icon("th")),
+      menuItem("Demographics and Income", tabName = "devansh_2", icon = icon("th")),
+      menuItem("Relationships", tabName = "oliver_1", icon = icon("th")),
+      menuItem("Race", tabName = "oliver_2", icon = icon("th"))
     )
   ),
   dashboardBody(
@@ -98,7 +99,7 @@ ui <- dashboardPage(
                                          "US Born" = "us_born"))
           ),
           
-          box(plotOutput("inc_plot", width="100%"), width=8),
+          box(plotlyOutput("inc_plot", width="100%"), width=8),
           box(plotOutput("cat_plot", width="100%"), width=12)
         )
       ),
@@ -141,12 +142,16 @@ ui <- dashboardPage(
         
         box(
           title="Controls",
-          radioButtons("sex", label='Gender:',
-                   choices = c("Both", "Male", "Female")),
-      
-          radioButtons("race", label='Race:',
-                   choices = c("All","White", "Black", "Asian-Pac-Islander", "Amer-Indian-Eskimo", "Other"))
-        )
+          checkboxInput("do_facet", label = "Facet on Gender"),
+  
+          radioButtons("which_variable", label = "Which variable?",
+                       choices = c("Occupation" = "occupation",
+                                   "Marital Status" = "marital.status",
+                                   "Work Class" = "workclass",
+                                   "Education" = "education",
+                                   "Race" = "race"))
+        ),
+        box(plotOutput("oliver_plot_1"))
       ),
       
       # Fifth tab content
@@ -155,12 +160,20 @@ ui <- dashboardPage(
         
         box(
           title="Controls",
-          radioButtons("sex", label='Gender:',
-                   choices = c("Both", "Male", "Female")),
-      
-          radioButtons("race", label='Race:',
-                   choices = c("All","White", "Black", "Asian-Pac-Islander", "Amer-Indian-Eskimo", "Other"))
-        )
+          radioButtons("which_variable_2", label = "Which variable?",
+                       choices = c("Occupation" = "occupation",
+                                   "Marital Status" = "marital.status",
+                                   "Work Class" = "workclass",
+                                   "Education" = "education")),
+          
+          radioButtons("which_race_2", label = "Which Race?",
+                       choices = c("American-Indian-Eskimo" = "Amer-Indian-Eskimo",
+                                   "Asian-Pacific Islander" = "Asian-Pac-Islander",
+                                   "Black" = "Black",
+                                   "Other" = "Other",
+                                   "White" = "White"))
+        ),
+        box(plotOutput("oliver_plot_2"))
       )
       
     )
@@ -172,7 +185,7 @@ server <- function(input, output) {
   histdata <- rnorm(500)
 
   # Ross Graphs
-  output$inc_plot <- renderPlot({
+  output$inc_plot <- renderPlotly({
     census_subset <- census
     if (!input$inc0) {
       census_subset <- census_subset %>% filter(capital.income != 0)
@@ -292,190 +305,51 @@ server <- function(input, output) {
              y="Proportion")
     })
   
+  output$oliver_plot_1 <- renderPlot({
+    census <- read.csv("adult_census_income.csv")
+    nan_idx <- union(which(census$occupation == '?'), which(census$workclass == '?'))
+    census_light <- census[-nan_idx,]
+    unisex.relationship <- census_light$relationship
+    levels(unisex.relationship) <- c(levels(unisex.relationship),"Married")
+    unisex.relationship[which(unisex.relationship == "Husband" | unisex.relationship == "Wife")] = "Married"
+    census_light <- mutate(census_light,
+                           unisex.relationship = unisex.relationship)
+    
+    p <- ggplot(census_light, aes_string(x = "unisex.relationship", fill = input$which_variable)) +
+        geom_bar(position = "fill") +
+        labs(x = "relationship",
+             title = paste("Relationship vs", input$which_variable))
+      
+      if(input$do_facet) {
+        p <- p + facet_wrap(~ sex)
+      }
+      
+      p
+  })
+  
+  output$oliver_plot_2 <- renderPlot({
+      census <- read.csv("adult_census_income.csv")
+      
+      nan_idx <- union(which(census$occupation == '?'), which(census$workclass == '?'))
+      census_light <- census[-nan_idx,]
+      unisex.relationship <- census_light$relationship
+      levels(unisex.relationship) <- c(levels(unisex.relationship),"Married")
+      unisex.relationship[which(unisex.relationship == "Husband" | unisex.relationship == "Wife")] = "Married"
+      census_light <- mutate(census_light,
+                             unisex.relationship = unisex.relationship)
+      
+      p <- ggplot(census_light, aes_string(x = "unisex.relationship", fill = input$which_variable_2)) +
+        geom_bar(position = "fill") +
+        labs(x = "relationship",
+             title = paste("Relationship vs", input$which_variable_2))
+      
+      p
+
+  })
+  
 }
 
 shinyApp(ui, server)
 ```
-
-
-
-```{r setup, include=FALSE, message=FALSE}
-library(shiny)
-library(tidyverse)
-```
-
-```{r, message = FALSE}
-census <- read_csv("/Users/devanshkukreja/Box Sync/CMU 2018 Spring/Stat Vis - 36315/36315_interactive_graphics_project/dkukreja/adult_census_income.csv") %>% 
-  select(-fnlwgt) %>% 
-  mutate(occupation = ifelse(occupation == "?", "Unknown", occupation) %>% 
-           factor,
-         workclass =  ifelse(workclass == "?", "Unknown", workclass) %>% 
-           factor,
-         education = education %>% factor, 
-         marital.status = marital.status %>% factor,
-         relationship = relationship %>% factor,
-         race = race %>% factor,
-         sex = sex %>% factor,
-         native.country = native.country %>% factor,
-         income = income %>% factor,
-         capital.income = ifelse(capital.gain > 0, capital.gain, -capital.loss),
-         us_born = ifelse(native.country == "United-States", "US Born", "Not US Born"))
-```
-
-```{r}
-# Define UI 
-ui <- fluidPage(
-
-  # App title 
-  titlePanel("Careers, Work Sector, and Income"),
-
-  # Sidebar layout with input and output definitions ----
-  sidebarLayout(
-
-    # Sidebar panel for inputs ----
-    sidebarPanel(
-
-      # Input
-      selectInput(inputId = "occupation",
-                  label = "Select an Occupation",
-                  choices = c("All" = "all",
-                              "Administrative/Clerical" = "Adm-clerical", 
-                              "Armed Forces" = "Armed-Forces", 
-                              "Craft/Repair" = "Craft-repair",
-                              "Executive/Managerial" = "Exec-managerial",
-                              "Farming/Fishing" = "Farming-fishing",
-                              "Handlers/Cleaners" = "Handlers-cleaners",
-                              "Machine Operators/Inspectors" = 
-                                "Machine-op-inspct",
-                              "Other Services" = "Other-service",
-                              "Private House Service" = "Priv-house-serv",
-                              "Professional/Specialty" = "Prof-specialty",
-                              "Protective Service" = "Protective-serv",
-                              "Sales" = "Sales",
-                              "Tech Support" = "Tech-support",
-                              "Transport/Moving" = "Transport-moving",
-                              "Unknown" = "Unknown")),
-      radioButtons("workclass", label = "Select a Work Sector",
-                   choices = c("All" = "all",
-                              "Federal Government" = "Federal-gov",
-                              "Local Government" = "Local-gov",
-                              "Never Worked" = "Never-worked",
-                              "Private" = "Private",
-                              "Self Employed (incorporated)" = "Self-emp-inc",
-                              "Self Employed (not incorporated)" = 
-                                "Self-emp-not-inc",
-                              "State Government" = "State-gov",
-                              "Unknown" = "Unknown",
-                              "Without Pay" = "Without-pay")
-      ),
-      checkboxInput("inc0", label = "Include 0 Capital Income?"),
-      checkboxInput("inc99999", label = "Include Capital Income > $99,999?"),
-      checkboxInput("prop_hist", label = "Proportional Histogram?"),
-      radioButtons("facet", label = "Facet?",
-                   choices = c("None" = "none",
-                               "Sex" = "sex",
-                               "Race" = "race",
-                               "US Born" = "us_born"))
-
-    ),
-
-    # Main panel
-    mainPanel(
-      tabsetPanel(type = "tabs",
-                  tabPanel("Capital Income", plotOutput("inc_plot")),
-                  tabPanel("Income Category", plotOutput("cat_plot")))
-    )
-  )
-)
-
-server <- function(input, output) {
-
-  output$inc_plot <- renderPlot({
-    census_subset <- census
-    if (!input$inc0) {
-      census_subset <- census_subset %>% filter(capital.income != 0)
-    }
-    if (!input$inc99999) {
-      census_subset <- census_subset %>% filter(capital.income != 99999)
-    }
-    if (input$occupation != "all") {
-      census_subset <- census_subset %>% filter(occupation == input$occupation)
-    }
-    if (input$workclass != "all") {
-      census_subset <- census_subset %>% filter(workclass == input$workclass)
-    }
-    
-    ci_plot <- ggplot(data = census_subset, aes(x = capital.income, 
-                                                fill = workclass)) +
-      labs(title = "Distribution of Capital Income",
-           subtitle = "The Intersection of Occupation and Work Sector",
-           x = "Capital Income")
-    if (input$prop_hist) {
-      ci_plot <- ci_plot + 
-        geom_histogram(binwidth = 1000, 
-                       aes(y = ..count.. /
-                             tapply(..count.., ..PANEL.., sum)[..PANEL..])) +
-        labs(y = "Proportion")
-    }
-    else {
-      ci_plot <- ci_plot + geom_histogram(binwidth = 1000) +
-        labs(y = "Count")
-    }
-    if (input$workclass == "all"){
-      ci_plot <- ci_plot + labs(fill = "Work Sector")
-    }
-    else{
-      ci_plot <- ci_plot + guides(fill = FALSE)
-    }
-    if (input$facet == "sex") {
-      ci_plot <- ci_plot + facet_grid(sex ~ .)
-    }
-    if (input$facet == "race") {
-      ci_plot <- ci_plot + facet_wrap(~race)
-    }
-    if (input$facet == "us_born") {
-      ci_plot <- ci_plot + facet_grid(us_born ~ .)
-    }
-    ci_plot
-    })
-  output$cat_plot <- renderPlot({
-    census_subset <- census
-    if (!input$inc0) {
-      census_subset <- census_subset %>% filter(capital.income != 0)
-    }
-    if (!input$inc99999) {
-      census_subset <- census_subset %>% filter(capital.income != 99999)
-    }
-    if (input$occupation != "all") {
-      census_subset <- census_subset %>% filter(occupation == input$occupation)
-    }
-    if (input$workclass != "all") {
-      census_subset <- census_subset %>% filter(workclass == input$workclass)
-    }
-    ct_p <- 
-      ggplot(census_subset, aes(x = workclass, fill = income)) +
-      geom_bar(position = "fill") +
-      coord_flip() + 
-      labs(title = "Relationship between Income Category and Work Sector",
-           y = "Proportion",
-           x = "Work Sector",
-           fill = "Income")
-    if (input$facet == "sex") {
-      ct_p <- ct_p + facet_grid(sex ~ .)
-    }
-    if (input$facet == "race") {
-      ct_p <- ct_p + facet_wrap(~race)
-    }
-    if (input$facet == "us_born") {
-      ct_p <- ct_p + facet_grid(us_born ~ .)
-    }
-    ct_p
-  })
-
-}
-
-shinyApp(ui = ui, server = server)
-```
-
 
 
