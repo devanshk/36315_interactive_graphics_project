@@ -31,7 +31,8 @@ server <- function(input, output) {
   
   #Welcome Screen
   
-  output$welcome_text <- renderText("We are so sorry you had to see this")
+  output$welcome_text <- renderText("The purpose of this web application is to allow the user to investigate interesting questions using a subset of the 1994 US census. What factors determine salary or capital gains? How does work affect someone's personal life? We've created a variety of interactive graphs to allow a user to gain insight into the data, and learn more about the lives of working US Americans")
+  output$data_text <- renderText("These data come from a subset of the 1994 US census. The data were obtained by Ronny Kohavi and Barry Becker who used them to predict a persons income class: either above or below $50,000 per year. See https://www.kaggle.com/uciml/adult-census-income for the dataset and more information about the original problem.")
   
   # Ross Graphs
   output$cat_inc_explanation <- renderText("How does one's income vary based on their chosen career path? Do particular occupations pay more or less depending on the sector in which one works? What occupations or work sectors make or lose money through investments? The following graphs allow you to explore different combinations of occupations, work sectors, and demographics to see the association between these factors, income level and capital gains or losses.")

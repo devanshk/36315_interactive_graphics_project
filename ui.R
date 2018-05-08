@@ -27,12 +27,12 @@ ui <- dashboardPage(
   dashboardHeader(title = "Census Analysis"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Welcome", tabName = "welcome_screen", icon = icon("thumbs-down")),
+      menuItem("Welcome", tabName = "welcome_screen", icon = icon("chart")),
       menuItem("Career Path and Income", tabName = "ross", icon = icon("building")),
-      menuItem("Capital Gains and Education", tabName = "devansh_1", icon = icon("th")),
-      menuItem("Demographics and Income", tabName = "devansh_2", icon = icon("th")),
-      menuItem("Relationships", tabName = "oliver_1", icon = icon("th")),
-      menuItem("Race", tabName = "oliver_2", icon = icon("th"))
+      menuItem("Capital Gains and Education", tabName = "devansh_1", icon = icon("graduation-cap")),
+      menuItem("Demographics and Income", tabName = "devansh_2", icon = icon("globe")),
+      menuItem("Relationships", tabName = "oliver_1", icon = icon("heart")),
+      menuItem("Race", tabName = "oliver_2", icon = icon("globe"))
     )
   ),
   dashboardBody(
@@ -40,8 +40,9 @@ ui <- dashboardPage(
       #Welcome Screen
       tabItem(tabName = "welcome_screen",
               fluidRow(
-                h2("Welcome to our terrible, terrible, app"),
-                box(textOutput("welcome_text"))
+                h2("An Analysis of 1994 Census Data"),
+                box(textOutput("welcome_text")),
+                box(textOutput("data_text"))
               )),
       # First tab content
       tabItem(tabName = "ross",
