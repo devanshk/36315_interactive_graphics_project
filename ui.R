@@ -46,7 +46,8 @@ ui <- dashboardPage(
       tabItem(tabName = "welcome_screen",
               fluidRow(
                 h2("An Analysis of 1994 Census Data"),
-                box(textOutput("welcome_text")),
+                infoBox("Overview", "The purpose of this web application is to allow the user to investigate interesting questions using a subset of the 1994 US census. What factors determine salary or capital gains? How does work affect someone's personal life? We've created a variety of interactive graphs to allow a user to gain insight into the data, and learn more about the lives of working US Americans",
+                        width = 12, color = "orange"),
                 box(textOutput("data_text"))
               )),
       # First tab content
@@ -100,7 +101,8 @@ ui <- dashboardPage(
                                            "Race" = "race",
                                            "US Born" = "us_born"))
                 ),
-                box(textOutput("cat_inc_explanation")),
+                infoBox("", "How does one's income vary based on their chosen career path? Do particular occupations pay more or less depending on the sector in which one works? What occupations or work sectors make or lose money through investments? The following graphs allow you to explore different combinations of occupations, work sectors, and demographics to see the association between these factors, income level and capital gains or losses.", 
+                        color = "purple", width = 8),
                 box(plotOutput("cat_plot", width = "100%"), width = 8),
                 box(plotlyOutput("inc_plot", width = "100%"), width = 12)
               )
@@ -132,7 +134,7 @@ ui <- dashboardPage(
       tabItem(tabName = "devansh_2",
               fluidRow(h2("Education and Demographics")),
               
-              fluidRow(infoBox("Description", "Here we explore the influences of education, race, and gender on income breakdown. We once notice a spike after achieving a bachelor's degree. Also notice that the income breakdown differs between the different genders - namely with women having lower percentages across the board of income >50K.",
+              fluidRow(infoBox("", "Here we explore the influences of education, race, and gender on income breakdown. We once notice a spike after achieving a bachelor's degree. Also notice that the income breakdown differs between the different genders - namely with women having lower percentages across the board of income >50K.",
                                color = "teal", width= 10)),
               
               fluidRow(
@@ -154,6 +156,10 @@ ui <- dashboardPage(
       tabItem(tabName = "oliver_1",
               h2("Relationship, Education, and Workload"),
               
+              fluidRow(infoBox("", "In this plot, we explore the associations between relationship, education, and workload.
+                      When choose a certain education level, the user is shown the proportional barplot of discretized working
+                      hours per week conditioned on relationship status",
+                      color = "yellow", width = 10)),
               box(
                 title="Controls",
                 selectInput("education", label = "Education Level",
@@ -166,17 +172,17 @@ ui <- dashboardPage(
                                         "Master" = "Masters",
                                         "Doctorate" = "Doctorate"))
               ),
-              box(plotOutput("oliver_plot_1")),
-              infoBox("Description", "In this plot, we explore the associations between relationship, education, and workload.
-                      When choose a certain education level, the user is shown the proportional barplot of discretized working
-                      hours per week conditioned on relationship status",
-                      color = "yellow")
+              box(plotOutput("oliver_plot_1"), width = 12)
       ),
       
       # Fifth tab content
       tabItem(tabName = "oliver_2",
               h2("Relationship and Occupation"),
               
+              infoBox(" ", "When a user chooses an relationship status, he/she is shown
+                      piecharts examining associations the distribution of occupation conditioning
+                      on gender and said relationship",
+                      color = "yellow", width = 10),
               box(
                 title="Controls",
                 selectInput("relationship", label = "Relationship Status",
@@ -186,11 +192,7 @@ ui <- dashboardPage(
                                         "Own Child" = "Own-child",
                                         "Unmarried" = "Unmarried"))
               ),
-              box(plotOutput("oliver_plot_2")),
-              infoBox("Description", "When a user chooses an relationship status, he/she is shown
-                      piecharts examining associations the distribution of occupation conditioning
-                      on gender and said relationship",
-                      color = "yellow")
+              box(plotOutput("oliver_plot_2"), width = 12)
       )
       
     )
