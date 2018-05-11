@@ -5,7 +5,10 @@ library(shinydashboard)
 library(plotly)
 
 
-df <- read.csv("adult_census_income.csv")
+df <- read.csv("adult_census_income.csv") %>%
+  mutate(education = factor(education,
+                            levels=c("Preschool","1st-4th","5th-6th","7th-8th","9th","10th","11th","12th","HS-grad","Some-college","Assoc-voc","Assoc-acdm","Bachelors","Masters","Prof-school","Doctorate"),
+                            ordered=TRUE))
 
 census <- read_csv("adult_census_income.csv") %>% 
   select(-fnlwgt) %>% 
@@ -158,43 +161,79 @@ server <- function(input, output) {
   })
   
   output$oliver_plot_1 <- renderPlot({
-    census <- read.csv("adult_census_income.csv")
+    
+    # data pre-processing for oliver-specific graphs
     nan_idx <- union(which(census$occupation == '?'), which(census$workclass == '?'))
-    census_light <- census[-nan_idx,]
+    census_light <- df[-nan_idx,]
     unisex.relationship <- census_light$relationship
     levels(unisex.relationship) <- c(levels(unisex.relationship),"Married")
     unisex.relationship[which(unisex.relationship == "Husband" | unisex.relationship == "Wife")] = "Married"
     census_light <- mutate(census_light,
                            unisex.relationship = unisex.relationship)
     
-    p <- ggplot(census_light, aes_string(x = "unisex.relationship", fill = input$which_variable)) +
+    education_abs <- census_light$education
+    levels(education_abs) <- c(levels(education_abs), "Elementary", "High-school", "Associate")
+    education_abs[which(education_abs == "1st-4th" | education_abs == "5th-6th")] = "Elementary"
+    education_abs[which(education_abs == "7th-8th" | education_abs == "9th" |
+                          education_abs == "10th" | education_abs == "11th" |
+                          education_abs == "12th" | education_abs == "HS-grad")] = "High-school"
+    education_abs[which(education_abs == "Assoc-acdm" | education_abs == "Assoc-voc")] = "Associate"
+    census_light <- mutate(census_light,
+                           education_abs = education_abs)
+    
+    hours.discrete <-c("0-29 hrs", "30-39 hrs", "40-49 hrs", "50-59 hrs", ">60 hrs")[
+      findInterval(census_light$hours.per.week , c(-Inf, 30, 40, 50, 60, Inf) )]
+    census_light <- mutate(census_light,
+                           hours.discrete = hours.discrete)
+    #preprocessing ends
+    cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+    
+    p <- ggplot(data = df, aes_string(x = "unisex.relationship", fill = "hours.discrete")) +
       geom_bar(position = "fill") +
-      labs(x = "relationship",
-           title = paste("Relationship vs", input$which_variable))
-    
-    if(input$do_facet) {
-      p <- p + facet_wrap(~ sex)
-    }
-    
+      labs(x = "Relationship",
+           y = "Proportion",
+           fill = "Working Hours\nper Week",
+           title = "Working Hours by Relationship and Education Level") +
+      scale_fill_manual(values=cbPalette)
     p
   })
   
   output$oliver_plot_2 <- renderPlot({
-    census <- read.csv("adult_census_income.csv")
-    
+    # data pre-processing for oliver-specific graphs
     nan_idx <- union(which(census$occupation == '?'), which(census$workclass == '?'))
-    census_light <- census[-nan_idx,]
+    census_light <- df[-nan_idx,]
     unisex.relationship <- census_light$relationship
     levels(unisex.relationship) <- c(levels(unisex.relationship),"Married")
     unisex.relationship[which(unisex.relationship == "Husband" | unisex.relationship == "Wife")] = "Married"
     census_light <- mutate(census_light,
                            unisex.relationship = unisex.relationship)
     
-    p <- ggplot(census_light, aes_string(x = "unisex.relationship", fill = input$which_variable_2)) +
-      geom_bar(position = "fill") +
-      labs(x = "relationship",
-           title = paste("Relationship vs", input$which_variable_2))
+    education_abs <- census_light$education
+    levels(education_abs) <- c(levels(education_abs), "Elementary", "High-school", "Associate")
+    education_abs[which(education_abs == "1st-4th" | education_abs == "5th-6th")] = "Elementary"
+    education_abs[which(education_abs == "7th-8th" | education_abs == "9th" |
+                          education_abs == "10th" | education_abs == "11th" |
+                          education_abs == "12th" | education_abs == "HS-grad")] = "High-school"
+    education_abs[which(education_abs == "Assoc-acdm" | education_abs == "Assoc-voc")] = "Associate"
+    census_light <- mutate(census_light,
+                           education_abs = education_abs)
     
+    hours.discrete <-c("0-29 hrs", "30-39 hrs", "40-49 hrs", "50-59 hrs", ">60 hrs")[
+      findInterval(census_light$hours.per.week , c(-Inf, 30, 40, 50, 60, Inf) )]
+    census_light <- mutate(census_light,
+                           hours.discrete = hours.discrete)
+    #preprocessing ends
+    cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+    
+    p <- ggplot(data = df, aes_string(x = factor(1), fill = "occupation")) +
+      geom_bar(position = "fill", width = 1) +
+      facet_wrap(~ sex) +
+      labs(x = "",
+           y = "",
+           fill = "Occupation",
+           title = "Distribution of Occupation by Gender and Relationship") +
+      coord_polar(theta = "y") +
+      scale_fill_manual(values=cbPalette)
     p
     
   })

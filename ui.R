@@ -5,6 +5,10 @@ library(shinydashboard)
 library(plotly)
 
 df <- read.csv("adult_census_income.csv")
+df <- mutate(df,
+             education = factor(education,
+                                levels=c("Preschool","1st-4th","5th-6th","7th-8th","9th","10th","11th","12th","HS-grad","Some-college","Assoc-voc","Assoc-acdm","Bachelors","Masters","Prof-school","Doctorate"),
+                                ordered=TRUE))
 
 census <- read_csv("adult_census_income.csv") %>% 
   select(-fnlwgt) %>% 
@@ -12,7 +16,8 @@ census <- read_csv("adult_census_income.csv") %>%
            factor,
          workclass =  ifelse(workclass == "?", "Unknown", workclass) %>% 
            factor,
-         education = education %>% factor, 
+         education = education %>% factor(levels=c("Preschool","1st-4th","5th-6th","7th-8th","9th","10th","11th","12th","HS-grad","Some-college","Assoc-voc","Assoc-acdm","Bachelors","Masters","Prof-school","Doctorate"),
+                                          ordered=TRUE), 
          marital.status = marital.status %>% factor,
          relationship = relationship %>% factor,
          race = race %>% factor,
@@ -103,74 +108,89 @@ ui <- dashboardPage(
       
       # Second tab content
       tabItem(tabName = "devansh_1",
-              h2("Capital Gains and Education"),
+              fluidRow(
+                h2("Capital Gains and Education")),
               
-              box(plotOutput("dk_census_plot_1", width="100%")),
+              fluidRow(infoBox("Description", "Here we explore the relationship between education and success in the investment world. Capital gains are the amount of money made through investing and losses is the amount of money lost. You'll notice a spike in investment gains after achieving a bachelor's degree.",
+                               color = "teal", width=10)),
+              fluidRow(
+                box(
+                  title="Controls",
+                  width=12,
+                  radioButtons("metric", label='Metric:',
+                               choices= c("Capital Gains", "Capital Losses")),
+                  
+                  checkboxInput("edges", label='Show Edge Entries (0 and 99999):')
+                )),
               
-              box(
-                title="Controls",
-                radioButtons("metric", label='Metric:',
-                             choices= c("Capital Gains", "Capital Losses")),
-                
-                checkboxInput("edges", label='Show Edge Entries (0 and 99999):')
+              fluidRow(
+                box(plotOutput("dk_census_plot_1"),width=12)
               )
-              
       ),
       
       # Third tab content
       tabItem(tabName = "devansh_2",
-              h2("Education and Demographics"),
+              fluidRow(h2("Education and Demographics")),
               
-              box(plotOutput("dk_census_plot_2", width="100%")),
+              fluidRow(infoBox("Description", "Here we explore the influences of education, race, and gender on income breakdown. We once notice a spike after achieving a bachelor's degree. Also notice that the income breakdown differs between the different genders - namely with women having lower percentages across the board of income >50K.",
+                               color = "teal", width= 10)),
               
-              box(
-                title="Controls",
-                radioButtons("sex", label='Gender:',
-                             choices = c("Both", "Male", "Female")),
+              fluidRow(
+                box(
+                  title="Controls",
+                  width=2,
+                  radioButtons("sex", label='Gender:',
+                               choices = c("Both", "Male", "Female")),
+                  
+                  radioButtons("race", label='Race:',
+                               choices = c("All","White", "Black", "Asian-Pac-Islander", "Amer-Indian-Eskimo", "Other"))
+                ),
                 
-                radioButtons("race", label='Race:',
-                             choices = c("All","White", "Black", "Asian-Pac-Islander", "Amer-Indian-Eskimo", "Other"))
+                box(plotOutput("dk_census_plot_2"), width=10)
               )
       ),
       
       # Fourth tab content
       tabItem(tabName = "oliver_1",
-              h2("Personal Relationships"),
+              h2("Relationship, Education, and Workload"),
               
               box(
                 title="Controls",
-                checkboxInput("do_facet", label = "Facet on Gender"),
-                
-                radioButtons("which_variable", label = "Which variable?",
-                             choices = c("Occupation" = "occupation",
-                                         "Marital Status" = "marital.status",
-                                         "Work Class" = "workclass",
-                                         "Education" = "education",
-                                         "Race" = "race"))
+                selectInput("education", label = "Education Level",
+                            choices = c("Pre-school" = "Preschool",
+                                        "Elementary" = "Elementary",
+                                        "High School" = "High-school",
+                                        "Associate" = "Associate",
+                                        "College" = "Some-college",
+                                        "Bachelor" = "Bachelors",
+                                        "Master" = "Masters",
+                                        "Doctorate" = "Doctorate"))
               ),
-              box(plotOutput("oliver_plot_1"))
+              box(plotOutput("oliver_plot_1")),
+              infoBox("Description", "In this plot, we explore the associations between relationship, education, and workload.
+                      When choose a certain education level, the user is shown the proportional barplot of discretized working
+                      hours per week conditioned on relationship status",
+                      color = "yellow")
       ),
       
       # Fifth tab content
       tabItem(tabName = "oliver_2",
-              h2("Race and Work"),
+              h2("Relationship and Occupation"),
               
               box(
                 title="Controls",
-                radioButtons("which_variable_2", label = "Which variable?",
-                             choices = c("Occupation" = "occupation",
-                                         "Marital Status" = "marital.status",
-                                         "Work Class" = "workclass",
-                                         "Education" = "education")),
-                
-                radioButtons("which_race_2", label = "Which Race?",
-                             choices = c("American-Indian-Eskimo" = "Amer-Indian-Eskimo",
-                                         "Asian-Pacific Islander" = "Asian-Pac-Islander",
-                                         "Black" = "Black",
-                                         "Other" = "Other",
-                                         "White" = "White"))
+                selectInput("relationship", label = "Relationship Status",
+                            choices = c("Married" = "Married",
+                                        "Not in Family" = "Not-in-family",
+                                        "Other Relative" = "Other-relative",
+                                        "Own Child" = "Own-child",
+                                        "Unmarried" = "Unmarried"))
               ),
-              box(plotOutput("oliver_plot_2"))
+              box(plotOutput("oliver_plot_2")),
+              infoBox("Description", "When a user chooses an relationship status, he/she is shown
+                      piecharts examining associations the distribution of occupation conditioning
+                      on gender and said relationship",
+                      color = "yellow")
       )
       
     )
